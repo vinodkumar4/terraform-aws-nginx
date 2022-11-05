@@ -11,8 +11,11 @@ provider "aws" {
   region = "ap-southeast-1"
 }
 
-module "bootstrap" {
-  source                      = "./terraform-modules/modules/bootstrap"
-  name_of_s3_bucket           = "s3-bucket-for-terraform-singapre-vinod"
-  dynamo_db_table_name        = "aws-terraform-locks"
+terraform {
+  backend "s3" {
+    bucket         = "s3-bucket-for-terraform-singapre-vinod"
+    key            = "terraform.tfstate"
+    region         = "ap-southeast-1"
+    dynamodb_table = "aws-terraform-locks"
+  }
 }
