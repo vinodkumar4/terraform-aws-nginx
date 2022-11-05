@@ -108,7 +108,7 @@ resource "aws_launch_configuration" "aws_lc_conf" {
   name_prefix   = "terraform-lc-nphc-"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
-  key_name = "sg_key_pair"
+  #key_name = "sg_key_pair"
   iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
   security_groups = [ aws_security_group.allow_traffic.id ]
   user_data = data.template_file.startup.rendered
