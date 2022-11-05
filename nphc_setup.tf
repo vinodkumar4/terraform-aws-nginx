@@ -22,11 +22,11 @@ module "nphc_s3" {
   bucket_name = "nphc-vinod-s3-bucket"
 }
 
-module "bootstrap" {
-  source                      = "./terraform-modules/modules/bootstrap"
-  name_of_s3_bucket           = "s3-bucket-for-terraform-singapre-vinod"
-  dynamo_db_table_name        = "aws-terraform-locks"
-}
+# module "bootstrap" {
+#   source                      = "./terraform-modules/modules/bootstrap"
+#   name_of_s3_bucket           = "s3-bucket-for-terraform-singapre-vinod"
+#   dynamo_db_table_name        = "aws-terraform-locks"
+# }
 
 resource "aws_s3_object" "file_upload" {
   bucket      = module.nphc_s3.bucket_name
