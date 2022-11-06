@@ -134,7 +134,7 @@ resource "aws_autoscaling_group" "aws_asg_configuration" {
   name_prefix                 = "terraform-asg-nphc-"
   launch_template {
     id = aws_launch_template.aws_lc_configuration.id
-    version = "$Latest"
+    version = aws_launch_template.aws_lc_configuration.latest_version
   }
   target_group_arns = [module.nphc_elb.target_group_arn]
   min_size             = 3
