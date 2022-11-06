@@ -12,5 +12,7 @@
 
 
 ## Screenshot after uppercase only for COUNTER
-
 ![image](https://user-images.githubusercontent.com/28803383/200167165-0c98ca8a-551f-4505-8adb-e93c37aa9990.png)
+
+## Finally updated all text to uppercase
+![image](https://user-images.githubusercontent.com/28803383/200168486-5c9a163c-6aa2-414e-9150-aa90fee47d28.png)
