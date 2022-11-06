@@ -122,6 +122,7 @@ resource "aws_launch_template" "aws_lc_configuration" {
   }
   vpc_security_group_ids = [ aws_security_group.allow_traffic.id ]
   user_data = filebase64("${path.module}/setup.sh")
+  update_default_version = true
   lifecycle {
     create_before_destroy = true
   }
@@ -133,7 +134,7 @@ resource "aws_autoscaling_group" "aws_asg_configuration" {
   name_prefix                 = "terraform-asg-nphc-"
   launch_template {
     id = aws_launch_template.aws_lc_configuration.id
-    version = aws_launch_template.aws_lc_configuration.latest_version
+    version = "$Latest"
   }
   target_group_arns = [module.nphc_elb.target_group_arn]
   min_size             = 3
