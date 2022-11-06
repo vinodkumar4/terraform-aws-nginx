@@ -1,5 +1,5 @@
 locals {
-  object_source = "${path.module}/source.zip"
+  object_source = "${path.module}/source"
 }
 
 module "nphc_vpc" {
@@ -14,7 +14,7 @@ module "nphc_elb" {
   loadbalancer_type = "application"
   loadbalancer_security_group_ids = [module.nphc_vpc.open_security_groups]
   target_group_type = "instance"
-  loadbalancer_subnets = [module.nphc_vpc.private_subnets[0], module.nphc_vpc.private_subnets[1], module.nphc_vpc.private_subnets[2]] 
+  loadbalancer_subnets = [module.nphc_vpc.public_subnets[0], module.nphc_vpc.public_subnets[1], module.nphc_vpc.public_subnets[2]] 
 }
 
 module "nphc_s3" {
@@ -28,11 +28,17 @@ module "nphc_s3" {
 #   dynamo_db_table_name        = "aws-terraform-locks"
 # }
 
+data "archive_file" "archive" {
+  type        = "zip"
+  output_path = "${path.module}/source.zip"
+  source_dir  = local.object_source
+}
+
 resource "aws_s3_object" "file_upload" {
   bucket      = module.nphc_s3.bucket_name
-  key         = "source-code"
-  source      = local.object_source
-  source_hash = filemd5(local.object_source)
+  key         = "sourcecode"
+  source      = data.archive_file.archive.output_path
+  source_hash = filemd5(data.archive_file.archive.output_path)
 }
 
 resource "aws_iam_role" "s3_read_role" {
@@ -106,18 +112,16 @@ resource "aws_security_group" "allow_traffic" {
   }
 }
 
-data "template_file" "startup" {
- template = file("setup.sh")
-}
-
-resource "aws_launch_configuration" "aws_lc_conf" {
+resource "aws_launch_template" "aws_lc_configuration" {
   name_prefix   = "terraform-lc-nphc-"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
   #key_name = "sg_key_pair"
-  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
-  security_groups = [ aws_security_group.allow_traffic.id ]
-  user_data = data.template_file.startup.rendered
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_instance_profile.name
+  }
+  vpc_security_group_ids = [ aws_security_group.allow_traffic.id ]
+  user_data = filebase64("${path.module}/setup.sh")
   lifecycle {
     create_before_destroy = true
   }
@@ -127,11 +131,19 @@ resource "aws_autoscaling_group" "aws_asg_configuration" {
   desired_capacity = 3
   vpc_zone_identifier = [module.nphc_vpc.private_subnets[0], module.nphc_vpc.private_subnets[1], module.nphc_vpc.private_subnets[2]]
   name_prefix                 = "terraform-asg-nphc-"
-  launch_configuration = aws_launch_configuration.aws_lc_conf.name
+  launch_template {
+    id = aws_launch_template.aws_lc_configuration.id
+    version = aws_launch_template.aws_lc_configuration.latest_version
+  }
   target_group_arns = [module.nphc_elb.target_group_arn]
   min_size             = 3
   max_size             = 6
-
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
+  }
   lifecycle {
     create_before_destroy = true
   }
